@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -10,14 +10,16 @@ import {
   FormControlLabel,
   Box,
   Grid,
-} from '@mui/material';
-import { useForm } from 'react-hook-form';
-import scanner from './assets/scanner-image.png'
+  RadioGroup,
+  Radio,
+} from "@mui/material";
+import { useForm } from "react-hook-form";
+import scanner from "./assets/scanner-image.png";
 
 const DonationForm = ({ open, onClose }) => {
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, reset } = useForm();
   const [scannerOpen, setScannerOpen] = useState(false);
-
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
   const handlePaymentClick = () => {
     setScannerOpen(true);
   };
@@ -28,79 +30,202 @@ const DonationForm = ({ open, onClose }) => {
 
   const onSubmit = (data) => {
     console.log(data);
-    // Handle form submission logic here
+    reset();
+    setSelectedPaymentMethod("");
+    onClose();
   };
 
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-        <DialogTitle sx={{textAlign:'center'}}>FOUNDATION</DialogTitle>
-        <DialogContent style={{paddingTop:'5px'}}>
+        <DialogTitle sx={{ textAlign: "center" }}>FOUNDATION</DialogTitle>
+        <DialogContent style={{ paddingTop: "5px" }}>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <Grid container spacing={2} >
-              <Grid item xs={12} sx={{width:'100%'}}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sx={{ width: "100%" }}>
                 <TextField
                   label="Name"
                   fullWidth
-                  {...register('name')}
+                  {...register("name")}
                   required
                 />
               </Grid>
-              <Grid item xs={12} sx={{width:'100%'}}>
+              <Grid item xs={12} sx={{ width: "49%" }}>
+                <TextField
+                  label="Mobile Number"
+                  fullWidth
+                  {...register("phoneno")}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ width: "49%" }}>
+                <TextField
+                  label="Email"
+                  fullWidth
+                  {...register("email")}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ width: "100%" }}>
+                <TextField
+                  label="Address Line 1"
+                  fullWidth
+                  {...register("address1")}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ width: "100%" }}>
+                <TextField
+                  label="Address Line 2"
+                  fullWidth
+                  {...register("address2")}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ width: "49%" }}>
+                <TextField
+                  label="State"
+                  fullWidth
+                  {...register("state")}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ width: "49%" }}>
+                <TextField
+                  label="Pincode"
+                  fullWidth
+                  {...register("pincode")}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ width: "49%" }}>
                 <TextField
                   label="Purpose of Donation"
                   fullWidth
-                  {...register('purpose')}
+                  {...register("purpose")}
                   required
                 />
               </Grid>
-              <Grid item xs={12} sx={{width:'100%'}}>
-                <TextField
-                  label="Amount (₹)"
-                  fullWidth
-                  type="number"
-                  {...register('amount')}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sx={{width:'100%'}}>
-                <FormControlLabel
-                  control={<Checkbox {...register('paymentMethod.cash')} />}
-                  label="Cash"
-                />
-                <FormControlLabel
-                  control={<Checkbox {...register('paymentMethod.card')} />}
-                  label="Card"
-                />
-                <FormControlLabel
-                  control={<Checkbox {...register('paymentMethod.draft')} />}
-                  label="Draft"
-                />
-              </Grid>
-              <Grid item xs={12} sx={{width:'100%'}}>
-                <TextField
-                  label="Draft No."
-                  fullWidth
-                  {...register('draftNo')}
-                />
-              </Grid>
-              <Grid item xs={12} sx={{width:'100%'}}>
+              <Grid item xs={12} sx={{ width: "49%" }}>
                 <TextField
                   label="Date"
                   fullWidth
                   type="date"
-                  {...register('date')}
+                  {...register("date")}
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid item xs={12} sx={{width:'100%'}}>
+              <Grid item xs={12} sx={{ width: "100%" }}>
                 <TextField
-                  label="Transaction No."
+                  label="I would like to donate an amount of (₹)"
                   fullWidth
-                  {...register('accountNo')}
+                  type="number"
+                  {...register("amount")}
+                  required
                 />
               </Grid>
               <Grid item xs={12}>
+                <RadioGroup
+                  row
+                  value={selectedPaymentMethod}
+                  onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                >
+                  <FormControlLabel
+                    value="cash"
+                    control={<Radio />}
+                    label="Cash"
+                  />
+                  <FormControlLabel
+                    value="upi"
+                    control={<Radio />}
+                    label="UPI"
+                  />
+                  <FormControlLabel
+                    value="scanner"
+                    control={<Radio />}
+                    label="Scanner"
+                  />
+                  <FormControlLabel
+                    value="netbanking"
+                    control={<Radio />}
+                    label="NetBanking"
+                  />
+                  <FormControlLabel
+                    value="cheque"
+                    control={<Radio />}
+                    label="Cheque"
+                  />
+                  <FormControlLabel value="dd" control={<Radio />} label="DD" />
+                </RadioGroup>
+
+                <input
+                  type="hidden"
+                  value={selectedPaymentMethod}
+                  {...register("paymentMethod")}
+                />
+              </Grid>
+              {selectedPaymentMethod === "upi" && (
+                <Grid item xs={12} sx={{ width: "100%" }}>
+                  <TextField
+                    label="Kindly enter the UPI ID or Transaction ID"
+                    fullWidth
+                    {...register("upiId")}
+                    required
+                  />
+                </Grid>
+              )}
+
+              {selectedPaymentMethod === "netbanking" && (
+                <Grid item xs={12} sx={{ width: "100%" }}>
+                  <TextField
+                    label="Kindly enter the Reference Number"
+                    fullWidth
+                    {...register("netbankingRef")}
+                    required
+                  />
+                </Grid>
+              )}
+
+              {selectedPaymentMethod === "cheque" && (
+                <Grid item xs={12} sx={{ width: "100%" }}>
+                  <TextField
+                    label="Kindly enter the Cheque Number"
+                    fullWidth
+                    {...register("chequeNo")}
+                    required
+                  />
+                </Grid>
+              )}
+
+              {selectedPaymentMethod === "dd" && (
+                <Grid item xs={12} sx={{ width: "100%" }}>
+                  <TextField
+                    label="Kindly enter the Draft Number"
+                    fullWidth
+                    {...register("draftNo")}
+                    required
+                  />
+                </Grid>
+              )}
+              {/* {selectedPaymentMethod === "cash" && (
+                <Grid item xs={12} sx={{ width: "100%" }}>
+                  <TextField
+                    label="I would like to donate an amount of"
+                    fullWidth
+                    {...register("amount")}
+                    required
+                  />
+                </Grid>
+              )} */}
+
+              {/* <Grid item xs={12} sx={{ width: "100%" }}>
+                <TextField
+                  label="Transaction No."
+                  fullWidth
+                  {...register("accountNo")}
+                />
+              </Grid> */}
+              {/* <Grid item xs={12}>
                 <FormControlLabel
                   control={<Checkbox {...register('paymentType.full')} />}
                   label="Full Payment"
@@ -116,33 +241,40 @@ const DonationForm = ({ open, onClose }) => {
                   {...register('receiverSignature')}
                   accept="image/*"
                 />
-              </Grid>
+              </Grid> */}
             </Grid>
             <DialogActions>
               <Button onClick={onClose}>Cancel</Button>
               <Button type="submit" color="primary">
                 Submit
               </Button>
-              <Button onClick={handlePaymentClick} color="secondary">
-                Payment
-              </Button>
+              {selectedPaymentMethod === "scanner" && (
+                <Button onClick={handlePaymentClick} color="secondary">
+                  Scanner
+                </Button>
+              )}
             </DialogActions>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={scannerOpen} onClose={handleScannerClose} fullWidth maxWidth="sm">
+      <Dialog
+        open={scannerOpen}
+        onClose={handleScannerClose}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>Scan Your Payment</DialogTitle>
         <DialogContent>
           <Box
             sx={{
               backgroundImage: `url(${scanner})`,
-              backgroundSize: 'contain',
-              backgroundRepeat: 'no-repeat',
-              height: '300px',
+              backgroundSize: "contain",
+              backgroundRepeat: "no-repeat",
+              height: "300px",
               // width: '100%',
-              ml:'28%',
-              overflowX:'hidden'
+              ml: "28%",
+              overflowX: "hidden",
             }}
           />
         </DialogContent>
