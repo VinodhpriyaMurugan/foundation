@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -12,14 +12,48 @@ import {
   Grid,
   RadioGroup,
   Radio,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import scanner from "./assets/scanner-image.png";
+import thirufoundation from "./assets/Thirufoundation.png";
 
-const DonationForm = ({ open, onClose }) => {
-  const { register, handleSubmit, reset } = useForm();
+
+
+const DonationForm = ({ open, onClose, data, list }) => {
+  console.log("Data", data);
+  const { register, handleSubmit, reset, watch, setValue } = useForm({
+    defaultValues: {
+      ...data,
+      childrenCount: data?.childrenCount || 0,
+      amount: data?.amount || 0,
+    },
+  });
+
   const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+ const [isAmountManuallyEdited, setIsAmountManuallyEdited] = useState(false);
+
+ const childrenCount = watch("childrenCount");
+ const amount = watch("amount");
+
+ useEffect(() => {
+   if (!isAmountManuallyEdited) {
+     const count = Number(childrenCount) || 0;
+     const calculatedAmount = count * (data?.amount || 0);
+     setValue("amount", calculatedAmount);
+   }
+ }, [childrenCount, isAmountManuallyEdited, setValue]);
+
+ const handleAmountChange = (e) => {
+   setIsAmountManuallyEdited(true);
+   setValue("amount", e.target.value);
+ };
+
+
   const handlePaymentClick = () => {
     setScannerOpen(true);
   };
@@ -28,8 +62,8 @@ const DonationForm = ({ open, onClose }) => {
     setScannerOpen(false);
   };
 
-  const onSubmit = (data) => {
-    console.log(data);
+  const onSubmit = (formData) => {
+    console.log(formData);
     reset();
     setSelectedPaymentMethod("");
     onClose();
@@ -37,9 +71,16 @@ const DonationForm = ({ open, onClose }) => {
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-        <DialogTitle sx={{ textAlign: "center" }}>FOUNDATION</DialogTitle>
-        <DialogContent style={{ paddingTop: "5px" }}>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" >
+        <Box sx={{ position: "absolute", left: 16 ,mt:'10px'}}>
+          <img
+            src={thirufoundation}
+            alt="Icon"
+            style={{ height: "auto", width: "200px" }}
+          />
+        </Box>
+        <DialogTitle sx={{ textAlign: "center" }}>Donate Us</DialogTitle>
+        <DialogContent style={{ paddingTop: "10px" }}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Grid container spacing={2}>
               <Grid item xs={12} sx={{ width: "100%" }}>
@@ -98,14 +139,33 @@ const DonationForm = ({ open, onClose }) => {
                   required
                 />
               </Grid>
+
+              <FormControl fullWidth required>
+                <InputLabel id="purpose-label">Purpose of Donation</InputLabel>
+                <Select
+                  labelId="purpose-label"
+                  label="Purpose of Donation"
+                  defaultValue={data?.category || ""}
+                  {...register("purpose")}
+                >
+                  {list.map((cat) => (
+                    <MenuItem key={cat} value={cat}>
+                      {cat}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
               <Grid item xs={12} sx={{ width: "49%" }}>
                 <TextField
-                  label="Purpose of Donation"
+                  label="No. of Children to be Donated"
                   fullWidth
-                  {...register("purpose")}
+                  type="number"
+                  {...register("childrenCount", { valueAsNumber: true })}
                   required
                 />
               </Grid>
+
               <Grid item xs={12} sx={{ width: "49%" }}>
                 <TextField
                   label="Date"
@@ -115,15 +175,21 @@ const DonationForm = ({ open, onClose }) => {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
+
               <Grid item xs={12} sx={{ width: "100%" }}>
                 <TextField
                   label="I would like to donate an amount of (₹)"
                   fullWidth
                   type="number"
                   {...register("amount")}
+                  // InputProps={{
+                  //   readOnly: true,
+                  // }}
+                  onChange={handleAmountChange}
                   required
                 />
               </Grid>
+
               <Grid item xs={12}>
                 <RadioGroup
                   row
@@ -164,6 +230,7 @@ const DonationForm = ({ open, onClose }) => {
                   {...register("paymentMethod")}
                 />
               </Grid>
+
               {selectedPaymentMethod === "upi" && (
                 <Grid item xs={12} sx={{ width: "100%" }}>
                   <TextField
@@ -207,42 +274,8 @@ const DonationForm = ({ open, onClose }) => {
                   />
                 </Grid>
               )}
-              {/* {selectedPaymentMethod === "cash" && (
-                <Grid item xs={12} sx={{ width: "100%" }}>
-                  <TextField
-                    label="I would like to donate an amount of"
-                    fullWidth
-                    {...register("amount")}
-                    required
-                  />
-                </Grid>
-              )} */}
-
-              {/* <Grid item xs={12} sx={{ width: "100%" }}>
-                <TextField
-                  label="Transaction No."
-                  fullWidth
-                  {...register("accountNo")}
-                />
-              </Grid> */}
-              {/* <Grid item xs={12}>
-                <FormControlLabel
-                  control={<Checkbox {...register('paymentType.full')} />}
-                  label="Full Payment"
-                />
-                <FormControlLabel
-                  control={<Checkbox {...register('paymentType.part')} />}
-                  label="Part Payment"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <input
-                  type="file"
-                  {...register('receiverSignature')}
-                  accept="image/*"
-                />
-              </Grid> */}
             </Grid>
+
             <DialogActions>
               <Button onClick={onClose}>Cancel</Button>
               <Button type="submit" color="primary">
@@ -250,7 +283,7 @@ const DonationForm = ({ open, onClose }) => {
               </Button>
               {selectedPaymentMethod === "scanner" && (
                 <Button onClick={handlePaymentClick} color="secondary">
-                  Scanner
+                  Scan to pay
                 </Button>
               )}
             </DialogActions>
@@ -272,7 +305,6 @@ const DonationForm = ({ open, onClose }) => {
               backgroundSize: "contain",
               backgroundRepeat: "no-repeat",
               height: "300px",
-              // width: '100%',
               ml: "28%",
               overflowX: "hidden",
             }}
