@@ -21,39 +21,60 @@ import { useForm } from "react-hook-form";
 import scanner from "./assets/scanner-image.png";
 import thirufoundation from "./assets/Thirufoundation.png";
 
-
-
-const DonationForm = ({ open, onClose, data, list }) => {
-  console.log("Data", data);
+const DonationForm = ({ open, onClose, data, list, category }) => {
+  console.log("Data", list, category);
   const { register, handleSubmit, reset, watch, setValue } = useForm({
     defaultValues: {
       ...data,
       childrenCount: data?.childrenCount || 0,
       amount: data?.amount || 0,
+      purpose: Array.isArray(category) ? category : [category || ""],
     },
   });
+  // Filter the purposes list to exclude the category
+  const filteredList = list.filter((item) => item.category !== category);
 
   const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
- const [isAmountManuallyEdited, setIsAmountManuallyEdited] = useState(false);
+  const [isAmountManuallyEdited, setIsAmountManuallyEdited] = useState(false);
+  const purposes = watch("purpose");
+  console.log(watch("purpose"), purposes);
+  const childrenCount = watch("childrenCount");
+  const amount = watch("amount");
+  const [baseAmount, setBaseAmount] = useState(0);
 
- const childrenCount = watch("childrenCount");
- const amount = watch("amount");
+  useEffect(() => {
+    if (!isAmountManuallyEdited) {
+      let totalAmount = 0;
 
- useEffect(() => {
-   if (!isAmountManuallyEdited) {
-     const count = Number(childrenCount) || 0;
-     const calculatedAmount = count * (data?.amount || 0);
-     setValue("amount", calculatedAmount);
-   }
- }, [childrenCount, isAmountManuallyEdited, setValue]);
+      if (Array.isArray(purposes)) {
+        totalAmount = purposes.reduce((sum, purposeName) => {
+          const matched = list.find((item) => item.category === purposeName);
+          return sum + (matched?.amount["INR"] || 0);
+        }, 0);
+      }
 
- const handleAmountChange = (e) => {
-   setIsAmountManuallyEdited(true);
-   setValue("amount", e.target.value);
- };
+      if (category && !purposes.includes(category)) {
+        const categoryItem = list.find((item) => item.category === category);
+        totalAmount += categoryItem?.amount["INR"] || 0;
+      }
+      console.log("Total amount", totalAmount);
+      setValue("amount", totalAmount);
+      setBaseAmount(totalAmount);
+    }
+  }, [purposes, category, isAmountManuallyEdited, setValue, list]);
 
-
+  const handleAmountChange = (e) => {
+    setIsAmountManuallyEdited(true);
+    setValue("amount", e.target.value);
+  };
+  const handleCountChange = (e) => {
+    setIsAmountManuallyEdited(true);
+    setValue(
+      "amount",
+      (e.target.value && baseAmount * e.target.value) || baseAmount * 1
+    );
+  };
   const handlePaymentClick = () => {
     setScannerOpen(true);
   };
@@ -71,8 +92,8 @@ const DonationForm = ({ open, onClose, data, list }) => {
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" >
-        <Box sx={{ position: "absolute", left: 16 ,mt:'10px'}}>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+        <Box sx={{ position: "absolute", left: 16, mt: "10px" }}>
           <img
             src={thirufoundation}
             alt="Icon"
@@ -139,22 +160,43 @@ const DonationForm = ({ open, onClose, data, list }) => {
                   required
                 />
               </Grid>
-
-              <FormControl fullWidth required>
-                <InputLabel id="purpose-label">Purpose of Donation</InputLabel>
-                <Select
-                  labelId="purpose-label"
-                  label="Purpose of Donation"
-                  defaultValue={data?.category || ""}
-                  {...register("purpose")}
-                >
-                  {list.map((cat) => (
-                    <MenuItem key={cat} value={cat}>
-                      {cat}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Grid item xs={12} sx={{ width: "100%" }}>
+                <TextField
+                  label="Donate for"
+                  fullWidth
+                  value={category || ""}
+                  disabled
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ width: "100%" }}>
+                <FormControl fullWidth required>
+                  <InputLabel id="purpose-label">
+                    Add Additional Category
+                  </InputLabel>
+                  <Select
+                    labelId="purpose-label"
+                    label="Purpose of Donation"
+                    multiple
+                    value={watch("purpose") || []}
+                    onChange={(e) => {
+                      setValue("purpose", e.target.value);
+                      setIsAmountManuallyEdited(false);
+                    }}
+                    renderValue={(selected) => selected.join(", ")}
+                  >
+                    {filteredList.map((cat) => (
+                      <MenuItem key={cat.name} value={cat.category}>
+                        <Checkbox
+                          checked={(watch("purpose") || []).includes(
+                            cat.category
+                          )}
+                        />
+                        {cat.category}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
               <Grid item xs={12} sx={{ width: "49%" }}>
                 <TextField
@@ -162,6 +204,7 @@ const DonationForm = ({ open, onClose, data, list }) => {
                   fullWidth
                   type="number"
                   {...register("childrenCount", { valueAsNumber: true })}
+                  onChange={handleCountChange}
                   required
                 />
               </Grid>

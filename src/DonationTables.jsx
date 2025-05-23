@@ -58,9 +58,13 @@ const scholarshipData = [
 ];
 
 const categoryList = [
-  ...new Set(schoolSupportData.map((item) => item.category)),
-  ...new Set(scholarshipData.map((item) => item.category)),
-]; // unique categories
+  ...new Map(
+    [...schoolSupportData, ...scholarshipData].map((item) => [
+      item.category,
+      { category: item.category, amount: item.amount },
+    ])
+  ).values(),
+];
 
 // Shared table header style
 const headerCellSx = {
@@ -76,12 +80,13 @@ const DonationTables = () => {
   const [selectedCurrency, setSelectedCurrency] = useState({});
   const [donationData, setDonationData] = useState({});
   const [previewOpen, setPreviewOpen] = useState(false);
-
+  const [cat, setcat] = useState("");
   const handlePreviewOpen = () => setPreviewOpen(true);
   const handlePreviewClose = () => setPreviewOpen(false);
 
-  const handleDonate = (category, currency, amount) => {
-    setDonationData({ category, currency, amount });
+  const handleDonate = (category, currency, amountPerStudent, totalAmount) => {
+    setcat(category);
+    setDonationData({ category, currency, amountPerStudent, totalAmount });
     setFormOpen(true);
   };
 
@@ -191,11 +196,10 @@ const DonationTables = () => {
           <img
             src={thirufoundation}
             alt="Icon"
-            style={{ height: 'auto', width:'200px' }}
+            style={{ height: "auto", width: "200px" }}
           />
         </Box>
 
-       
         {renderTable(schoolSupportData, "School Support Statistics")}
         {renderTable(scholarshipData, "Scholarship Program Statistics")}
 
@@ -216,6 +220,7 @@ const DonationTables = () => {
         onClose={handleFormClose}
         data={donationData}
         list={categoryList}
+        category={cat}
       />
       <Dialog
         open={previewOpen}
@@ -232,7 +237,6 @@ const DonationTables = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleImageDownload}>Download</Button>
           <Button onClick={handlePreviewClose} color="secondary">
             Close
           </Button>
